@@ -1,16 +1,21 @@
 services:
-  app:
+  app1:
     build: .
+    environment: ...
+    depends_on: [db, redis]
+
+  app2:
+    build: .
+    environment: ...
+    depends_on: [db, redis]
+
+  nginx:
+    image: nginx:latest
     ports:
-      - '3000:3000'
-    environment:
-      - DB_HOST=db
-      - DB_USER=postgres
-      - DB_PASS=postgres
-      - DB_NAME=backend_project
-    depends_on:
-      - db
-      - redis
+      - '8080:8080'
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on: [app1, app2]
 
   db:
     image: postgres:15
