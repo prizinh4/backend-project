@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { User } from './user.entity';
+import { cacheHits, cacheMisses } from '../metrics/prometheus';
 
 @Injectable()
 export class UsersService {
@@ -17,8 +18,12 @@ export class UsersService {
   async findAll(page = 1, limit = 10) {
     const cacheKey = `users_page_${page}_limit_${limit}`;
     const cached = await this.cacheManager.get(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      cacheHits.inc();
+      return cached;
+    }
 
+    cacheMisses.inc();
     const [data, total] = await this.userRepository.findAndCount({
       skip: (page - 1) * limit,
       take: limit,

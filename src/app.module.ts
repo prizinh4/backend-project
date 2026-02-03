@@ -6,6 +6,7 @@ import * as redisStore from 'cache-manager-redis-store';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { HealthModule } from './health/health.module';
+import { MetricsModule } from './metrics/metrics.module';
 import { dataSourceOptions } from './ormconfig';
 
 @Module({
@@ -24,6 +25,7 @@ import { dataSourceOptions } from './ormconfig';
     TypeOrmModule.forRoot(dataSourceOptions),
     UsersModule,
     HealthModule,
+    MetricsModule,
   ],
   providers: [
     {
