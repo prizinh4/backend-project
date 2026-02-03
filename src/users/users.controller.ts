@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { PaginationQueryDto } from './dto/pagination-query.dto';
+import { PaginationQueryDto } from './dto';
 
 @Controller('users')
 export class UsersController {

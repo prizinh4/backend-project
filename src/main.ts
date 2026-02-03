@@ -1,14 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { AppDataSource } from './ormconfig';
 
 async function bootstrap() {
-  if (!AppDataSource.isInitialized) {
-    await AppDataSource.initialize();
-    console.log('Database initialized');
-  }
-
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(
     new ValidationPipe({

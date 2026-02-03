@@ -1,7 +1,7 @@
-import { DataSource } from 'typeorm';
-import { User } from './users/user.entity'; // ...existing code...
+import { DataSourceOptions } from 'typeorm';
+import { User } from './users/user.entity';
 
-export const AppDataSource = new DataSource({
+export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
   host: process.env.DB_HOST || 'localhost',
   port: 5432,
@@ -9,5 +9,5 @@ export const AppDataSource = new DataSource({
   password: process.env.DB_PASS || 'postgres',
   database: process.env.DB_NAME || 'backend_project',
   entities: [User],
-  synchronize: true, // dev only
-});
+  synchronize: process.env.APP_INSTANCE === '1' || !process.env.APP_INSTANCE,
+};
