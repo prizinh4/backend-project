@@ -309,4 +309,4 @@ Executado automaticamente a cada push ou pull request na branch `main`.
 
 ---
 
-**Desenvolvido com ❤️ usando NestJS e TypeScript**
+**Desenvolvido com NestJS e TypeScript**
