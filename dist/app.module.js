@@ -41,17 +41,26 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
+const core_1 = require("@nestjs/core");
 const cache_manager_1 = require("@nestjs/cache-manager");
+const throttler_1 = require("@nestjs/throttler");
 const redisStore = __importStar(require("cache-manager-redis-store"));
 const typeorm_1 = require("@nestjs/typeorm");
-const user_entity_1 = require("./users/user.entity");
 const users_module_1 = require("./users/users.module");
+const health_module_1 = require("./health/health.module");
+const metrics_module_1 = require("./metrics/metrics.module");
+const ormconfig_1 = require("./ormconfig");
+const redis_module_1 = require("./infra/redis.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            throttler_1.ThrottlerModule.forRoot([{
+                    ttl: 60000,
+                    limit: 10,
+                }]),
             cache_manager_1.CacheModule.register({
                 isGlobal: true,
                 store: redisStore,
@@ -59,17 +68,17 @@ exports.AppModule = AppModule = __decorate([
                 port: parseInt(process.env.REDIS_PORT || '6379', 10),
                 ttl: 300,
             }),
-            typeorm_1.TypeOrmModule.forRoot({
-                type: 'postgres',
-                host: process.env.DB_HOST || 'localhost',
-                port: 5432,
-                username: process.env.DB_USER || 'postgres',
-                password: process.env.DB_PASS || 'postgres',
-                database: process.env.DB_NAME || 'backend_project',
-                entities: [user_entity_1.User],
-                synchronize: true,
-            }),
+            redis_module_1.RedisModule,
+            typeorm_1.TypeOrmModule.forRoot(ormconfig_1.dataSourceOptions),
             users_module_1.UsersModule,
+            health_module_1.HealthModule,
+            metrics_module_1.MetricsModule,
+        ],
+        providers: [
+            {
+                provide: core_1.APP_GUARD,
+                useClass: throttler_1.ThrottlerGuard,
+            },
         ],
     })
 ], AppModule);

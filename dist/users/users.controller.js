@@ -15,21 +15,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersController = void 0;
 const common_1 = require("@nestjs/common");
 const users_service_1 = require("./users.service");
+const dto_1 = require("./dto");
 let UsersController = class UsersController {
     constructor(usersService) {
         this.usersService = usersService;
     }
-    findAll(page, limit) {
-        return this.usersService.findAll(page, limit);
+    findAll(query) {
+        return this.usersService.findAll(query.page, query.limit);
     }
 };
 exports.UsersController = UsersController;
 __decorate([
     (0, common_1.Get)(),
-    __param(0, (0, common_1.Query)('page')),
-    __param(1, (0, common_1.Query)('limit')),
+    __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Number]),
+    __metadata("design:paramtypes", [dto_1.PaginationQueryDto]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "findAll", null);
 exports.UsersController = UsersController = __decorate([

@@ -18,6 +18,7 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const cache_manager_1 = require("@nestjs/cache-manager");
 const user_entity_1 = require("./user.entity");
+const prometheus_1 = require("../metrics/prometheus");
 let UsersService = class UsersService {
     constructor(userRepository, cacheManager) {
         this.userRepository = userRepository;
@@ -26,8 +27,11 @@ let UsersService = class UsersService {
     async findAll(page = 1, limit = 10) {
         const cacheKey = `users_page_${page}_limit_${limit}`;
         const cached = await this.cacheManager.get(cacheKey);
-        if (cached)
+        if (cached) {
+            prometheus_1.cacheHits.inc();
             return cached;
+        }
+        prometheus_1.cacheMisses.inc();
         const [data, total] = await this.userRepository.findAndCount({
             skip: (page - 1) * limit,
             take: limit,

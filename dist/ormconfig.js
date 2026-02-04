@@ -1,16 +1,28 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AppDataSource = void 0;
-const typeorm_1 = require("typeorm");
-const user_entity_1 = require("./users/user.entity"); // ...existing code...
-exports.AppDataSource = new typeorm_1.DataSource({
+exports.dataSourceOptions = void 0;
+const user_entity_1 = require("./users/user.entity");
+exports.dataSourceOptions = {
     type: 'postgres',
-    host: process.env.DB_HOST || 'localhost',
-    port: 5432,
-    username: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASS || 'postgres',
-    database: process.env.DB_NAME || 'backend_project',
+    replication: {
+        master: {
+            host: process.env.DB_HOST || 'localhost',
+            port: 5432,
+            username: process.env.DB_USER || 'postgres',
+            password: process.env.DB_PASS || 'postgres',
+            database: process.env.DB_NAME || 'backend_project',
+        },
+        slaves: [
+            {
+                host: process.env.DB_REPLICA_HOST || process.env.DB_HOST || 'localhost',
+                port: 5432,
+                username: process.env.DB_USER || 'postgres',
+                password: process.env.DB_PASS || 'postgres',
+                database: process.env.DB_NAME || 'backend_project',
+            },
+        ],
+    },
     entities: [user_entity_1.User],
-    synchronize: true, // dev only
-});
+    synchronize: process.env.APP_INSTANCE === '1' || !process.env.APP_INSTANCE,
+};
 //# sourceMappingURL=ormconfig.js.map
