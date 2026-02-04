@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { User } from './user.entity';
@@ -13,6 +13,7 @@ export class UsersService {
     private userRepository: Repository<User>,
     @Inject(CACHE_MANAGER)
     private cacheManager: Cache,
+    private dataSource: DataSource,
   ) {}
 
   async findAll(page = 1, limit = 10) {
@@ -24,10 +25,16 @@ export class UsersService {
     }
 
     cacheMisses.inc();
-    const [data, total] = await this.userRepository.findAndCount({
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    
+    // Use QueryBuilder to ensure reads go to replica/slave
+    const queryBuilder = this.dataSource
+      .getRepository(User)
+      .createQueryBuilder('user')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [data, total] = await queryBuilder.getManyAndCount();
+    
     const result = { data, total, page, last_page: Math.ceil(total / limit) };
     await this.cacheManager.set(cacheKey, result, 300);
     return result;

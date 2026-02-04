@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { User } from './user.entity';
+import { DataSource } from 'typeorm';
 
 // Mock repository
 const mockRepo = {
@@ -14,6 +15,19 @@ const mockCache = {
   set: jest.fn(),
 };
 
+// Mock DataSource with QueryBuilder
+const mockQueryBuilder = {
+  skip: jest.fn().mockReturnThis(),
+  take: jest.fn().mockReturnThis(),
+  getManyAndCount: jest.fn().mockResolvedValue([[{ id: 1, name: 'Test User' }], 1]),
+};
+
+const mockDataSource = {
+  getRepository: jest.fn().mockReturnValue({
+    createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
+  }),
+};
+
 describe('UsersService', () => {
   let service: UsersService;
 
@@ -23,6 +37,7 @@ describe('UsersService', () => {
         UsersService,
         { provide: getRepositoryToken(User), useValue: mockRepo },
         { provide: 'CACHE_MANAGER', useValue: mockCache },
+        { provide: DataSource, useValue: mockDataSource },
       ],
     }).compile();
     service = module.get<UsersService>(UsersService);
