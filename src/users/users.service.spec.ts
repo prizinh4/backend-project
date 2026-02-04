@@ -15,14 +15,25 @@ const mockCache = {
   set: jest.fn(),
 };
 
-// Mock DataSource with QueryBuilder
+// Mock DataSource with QueryRunner
 const mockQueryBuilder = {
   skip: jest.fn().mockReturnThis(),
   take: jest.fn().mockReturnThis(),
   getManyAndCount: jest.fn().mockResolvedValue([[{ id: 1, name: 'Test User' }], 1]),
 };
 
+const mockQueryRunner = {
+  connect: jest.fn().mockResolvedValue(undefined),
+  release: jest.fn().mockResolvedValue(undefined),
+  manager: {
+    getRepository: jest.fn().mockReturnValue({
+      createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
+    }),
+  },
+};
+
 const mockDataSource = {
+  createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
   getRepository: jest.fn().mockReturnValue({
     createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
   }),

@@ -26,17 +26,23 @@ export class UsersService {
 
     cacheMisses.inc();
     
-    // Use QueryBuilder to ensure reads go to replica/slave
-    const queryBuilder = this.dataSource
-      .getRepository(User)
-      .createQueryBuilder('user')
-      .skip((page - 1) * limit)
-      .take(limit);
-
-    const [data, total] = await queryBuilder.getManyAndCount();
+    // Force read from replica by using getManager with read replication
+    const slaveQueryRunner = this.dataSource.createQueryRunner('slave');
     
-    const result = { data, total, page, last_page: Math.ceil(total / limit) };
-    await this.cacheManager.set(cacheKey, result, 300);
-    return result;
+    try {
+      await slaveQueryRunner.connect();
+      const [data, total] = await slaveQueryRunner.manager
+        .getRepository(User)
+        .createQueryBuilder('user')
+        .skip((page - 1) * limit)
+        .take(limit)
+        .getManyAndCount();
+      
+      const result = { data, total, page, last_page: Math.ceil(total / limit) };
+      await this.cacheManager.set(cacheKey, result, 300);
+      return result;
+    } finally {
+      await slaveQueryRunner.release();
+    }
   }
 }
