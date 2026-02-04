@@ -4,6 +4,7 @@ services:
     container_name: app1
     environment:
       - DB_HOST=db
+      - DB_REPLICA_HOST=db_replica
       - DB_USER=postgres
       - DB_PASS=postgres
       - DB_NAME=backend_project
@@ -27,6 +28,7 @@ services:
     container_name: app2
     environment:
       - DB_HOST=db
+      - DB_REPLICA_HOST=db_replica
       - DB_USER=postgres
       - DB_PASS=postgres
       - DB_NAME=backend_project
@@ -51,11 +53,51 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: backend_project
+      POSTGRES_HOST_AUTH_METHOD: trust
     ports:
       - '5432:5432'
     volumes:
       - db_data:/var/lib/postgresql/data
-    command: postgres
+      - ./init-replication.sh:/docker-entrypoint-initdb.d/init-replication.sh
+      - ./pg_hba.conf:/etc/postgresql/pg_hba.conf
+    command: |
+      postgres 
+      -c wal_level=replica 
+      -c max_wal_senders=3 
+      -c max_replication_slots=3 
+      -c hot_standby=on
+      -c hba_file=/etc/postgresql/pg_hba.conf
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db_replica:
+    image: postgres:15
+    container_name: backend_db_replica
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    ports:
+      - '5433:5432'
+    depends_on:
+      db:
+        condition: service_healthy
+    command: |
+      bash -c '
+      until pg_basebackup --pgdata=/var/lib/postgresql/data -R --slot=replication_slot --host=db --port=5432 -U postgres
+      do
+        echo "Waiting for master to be ready..."
+        sleep 2s
+      done
+      echo "Backup done, starting replica..."
+      chown -R postgres:postgres /var/lib/postgresql/data
+      chmod 0700 /var/lib/postgresql/data
+      exec gosu postgres postgres -c hot_standby=on
+      '
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -109,5 +151,6 @@ services:
 
 volumes:
   db_data:
+  db_replica_data:
   prometheus_data:
   grafana_data:
