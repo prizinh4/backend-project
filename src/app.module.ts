@@ -9,8 +9,6 @@ import { HealthModule } from './health/health.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { dataSourceOptions } from './ormconfig';
 
-import { RedisModule } from './infra/redis.module';
-
 @Module({
   imports: [
     ThrottlerModule.forRoot([{
@@ -24,7 +22,6 @@ import { RedisModule } from './infra/redis.module';
       port: parseInt(process.env.REDIS_PORT || '6379', 10),
       ttl: 300,
     }),
-    RedisModule,
     TypeOrmModule.forRoot(dataSourceOptions),
     UsersModule,
     HealthModule,
